@@ -1,118 +1,135 @@
 <!DOCTYPE html>
-<html>
+<html lang="ta">
 <head>
-    <meta charset="UTF-8">
-    <title>Time Lock</title>
-    <style>
-        body { 
-            font-family: Arial; 
-            background: #0d1117; 
-            color: #fff; 
-            text-align: center; 
-            padding: 50px;
-        }
-        .box { 
-            background: #161b22; 
-            padding: 40px; 
-            border-radius: 10px; 
-            display: inline-block;
-        }
-        #timer { 
-            font-size: 60px; 
-            color: #f85149; 
-            margin: 20px 0; 
-        }
-        .hidden { display: none; }
-        button {
-            background: #238636;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 6px;
-            font-size: 18px;
-            cursor: pointer;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily PDF Unlock</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 { color: #333; margin-bottom: 8px; font-size: 26px; }
+    .date { color: #666; margin-bottom: 25px; font-size: 14px; }
+    #timer {
+      font-size: 34px;
+      font-weight: bold;
+      color: #d32f2f;
+      margin: 25px 0;
+      font-family: 'Courier New', monospace;
+    }
+    #timer.ready { color: #2e7d32; }
+    button {
+      padding: 16px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+    }
+    button:hover:not(:disabled) { background: #1565c0; transform: scale(1.03); }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #msg { margin-top: 20px; color: #555; min-height: 22px; font-size: 14px; }
+    .icon { font-size: 55px; margin-bottom: 15px; }
+  </style>
 </head>
 <body>
-    <div class="box">
-        <h1>🔒 Time Locked PDF</h1>
+  <div class="box">
+    <div class="icon" id="icon">🔒</div>
+    <h1 id="pdfName">PDF Locked</h1>
+    <div class="date" id="date">Loading...</div>
+    <div id="timer">--:--:--</div>
+    <button id="openBtn" disabled>Open PDF</button>
+    <p id="msg">Time check panren...</p>
+  </div>
+
+  <script>
+    // ===== DAILY INGA MATTUM MAATHU DA - 12 HOUR FORMAT ✅ =====
+    const CONFIG = {
+      HOUR: 1,           // 1 to 12 mattum podu
+      MINUTE: 30,        // 0 to 59
+      AM_PM: 'PM',       // 'AM' or 'PM' kuduthudu
+      PDF_FILE: 'today.pdf', 
+      PDF_TITLE: 'Daily Paper'
+    };
+    // ==========================================================
+
+    const btn = document.getElementById('openBtn');
+    const timerEl = document.getElementById('timer');
+    const msgEl = document.getElementById('msg');
+    const iconEl = document.getElementById('icon');
+    const pdfNameEl = document.getElementById('pdfName');
+    const dateEl = document.getElementById('date');
+
+    // 12hr ah 24hr ku maatha function - code ku theva
+    function to24Hour(h, ampm) {
+      if (ampm === 'PM' && h !== 12) return h + 12;
+      if (ampm === 'AM' && h === 12) return 0;
+      return h;
+    }
+
+    const HOUR_24 = to24Hour(CONFIG.HOUR, CONFIG.AM_PM);
+    const displayTime = `${CONFIG.HOUR}:${String(CONFIG.MINUTE).padStart(2,'0')} ${CONFIG.AM_PM}`;
+
+    dateEl.innerText = new Date().toLocaleDateString('en-IN', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    });
+    pdfNameEl.innerText = CONFIG.PDF_TITLE;
+
+    function checkTime() {
+      const now = new Date();
+      const unlockTime = new Date();
+      unlockTime.setHours(HOUR_24, CONFIG.MINUTE, 0, 0);
+      
+      if (now >= unlockTime) {
+        timerEl.innerHTML = '✅ UNLOCKED';
+        timerEl.classList.add('ready');
+        btn.disabled = false;
+        btn.innerText = `Open ${CONFIG.PDF_TITLE}`;
+        msgEl.innerText = `Unlocked at ${displayTime}`;
+        iconEl.innerText = '🔓';
+        clearInterval(countdown);
+      } else {
+        const diff = unlockTime - now;
+        const h = Math.floor(diff / 1000 / 60 / 60);
+        const m = Math.floor(diff / 1000 / 60) % 60;
+        const s = Math.floor(diff / 1000) % 60;
         
-        <div id="lockedScreen">
-            <h2 id="status">LOCKED</h2>
-            <div id="timer">--:--:--</div>
-            <p id="timeInfo"></p>
-        </div>
+        timerEl.innerHTML = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        btn.disabled = true;
+        btn.innerText = `Unlocks at ${displayTime}`;
+        msgEl.innerText = `Innum ${h}h ${m}m ${s}s iruku da`;
+      }
+    }
 
-        <div id="unlockedScreen" class="hidden">
-            <h2 style="color:#2ea043">✅ UNLOCKED</h2>
-            <a id="pdfBtn" href="#" target="_blank">
-                <button>Open PDF</button>
-            </a>
-        </div>
-    </div>
+    btn.onclick = () => {
+      if (!btn.disabled) {
+        window.open(CONFIG.PDF_FILE, '_blank');
+      }
+    }
 
-    <script>
-        // ========================================
-        // IDHA MATTUM MAATHU DA - 12 HOUR FORMAT
-        // ========================================
-        const PDF_FILE = "today.pdf";    // PDF name
-        
-        const OPEN_HOUR = 5;             // 1 to 12 mattum podu
-        const OPEN_MIN = 26;             // 0 to 59
-        const AM_OR_PM = "PM";           // "AM" or "PM" nu podu
-        const OPEN_MINS = 5;             // Evlo nimisham open irukanum
-        // ========================================
-
-        // 12hr ah 24hr ku convert panrom - nee thoda venam
-        let hour24 = OPEN_HOUR;
-        if (AM_OR_PM === "PM" && OPEN_HOUR !== 12) {
-            hour24 = OPEN_HOUR + 12;
-        }
-        if (AM_OR_PM === "AM" && OPEN_HOUR === 12) {
-            hour24 = 0; // 12 AM = 0 hours
-        }
-
-        document.getElementById('pdfBtn').href = PDF_FILE;
-
-        function updateClock() {
-            const now = new Date();
-            const startTime = new Date();
-            startTime.setHours(hour24, OPEN_MIN, 0);
-            
-            const endTime = new Date(startTime);
-            endTime.setMinutes(startTime.getMinutes() + OPEN_MINS);
-
-            // Display ku 12hr format la kaaturom
-            const timeStr = `${OPEN_HOUR}:${OPEN_MIN.toString().padStart(2,'0')} ${AM_OR_PM}`;
-            const endHour12 = endTime.getHours() % 12 || 12;
-            const endAMPM = endTime.getHours() >= 12 ? 'PM' : 'AM';
-            const endTimeStr = `${endHour12}:${endTime.getMinutes().toString().padStart(2,'0')} ${endAMPM}`;
-            document.getElementById('timeInfo').innerText = `Open Time: ${timeStr} to ${endTimeStr}`;
-
-            if (now >= startTime && now <= endTime) {
-                document.getElementById('lockedScreen').classList.add('hidden');
-                document.getElementById('unlockedScreen').classList.remove('hidden');
-            } else {
-                document.getElementById('lockedScreen').classList.remove('hidden');
-                document.getElementById('unlockedScreen').classList.add('hidden');
-                
-                if (now < startTime) {
-                    const diff = startTime - now;
-                    const h = Math.floor(diff / 3600000);
-                    const m = Math.floor((diff % 3600000) / 60000);
-                    const s = Math.floor((diff % 60000) / 1000);
-                    document.getElementById('timer').innerText = 
-                        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-                } else {
-                    document.getElementById('status').innerText = "EXPIRED";
-                    document.getElementById('timer').innerText = "CLOSED";
-                }
-            }
-        }
-
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
+    const countdown = setInterval(checkTime, 1000);
+    checkTime();
+    document.title = `${CONFIG.PDF_TITLE} - ${displayTime} Unlock`;
+  </script>
 </body>
 </html>
