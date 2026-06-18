@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily PDF Unlock</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .box {
+      background: white;
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+    h1 { color: #333; margin-bottom: 8px; font-size: 26px; }
+    .date { color: #666; margin-bottom: 25px; font-size: 14px; }
+    #timer {
+      font-size: 34px;
+      font-weight: bold;
+      color: #d32f2f;
+      margin: 25px 0;
+      font-family: 'Courier New', monospace;
+    }
+    #timer.ready { color: #2e7d32; }
+    button {
+      padding: 16px 40px;
+      font-size: 18px;
+      font-weight: bold;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      width: 100%;
+    }
+    button:hover:not(:disabled) { background: #1565c0; transform: scale(1.03); }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #msg { margin-top: 20px; color: #555; min-height: 22px; font-size: 14px; }
+    .icon { font-size: 55px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon" id="icon">🔒</div>
+    <h1 id="pdfName">PDF Locked</h1>
+    <div class="date" id="date">Loading...</div>
+    <div id="timer">--:--:--</div>
+    <button id="openBtn" disabled>Open PDF</button>
+    <p id="msg">Time check panren...</p>
+  </div>
+
+  <script>
+    // ===== DAILY INGA MATTUM MAATHU DA =====
+    const CONFIG = {
+      HOUR: 13,           // 13 = 1 PM. Morning 1 na 1 podu
+      MINUTE: 30,         // 30 mins
+      PDF_FILE: 'today.pdf', // Daily pdf name maathu
+      PDF_TITLE: 'Daily Paper' // Display name
+    };
+    // ======================================
+
+    const btn = document.getElementById('openBtn');
+    const timerEl = document.getElementById('timer');
+    const msgEl = document.getElementById('msg');
+    const iconEl = document.getElementById('icon');
+    const pdfNameEl = document.getElementById('pdfName');
+    const dateEl = document.getElementById('date');
+
+    // Page load aana date kaatu
+    dateEl.innerText = new Date().toLocaleDateString('en-IN', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    });
+    pdfNameEl.innerText = CONFIG.PDF_TITLE;
+
+    function checkTime() {
+      const now = new Date();
+      const unlockTime = new Date();
+      unlockTime.setHours(CONFIG.HOUR, CONFIG.MINUTE, 0, 0);
+      
+      const diff = unlockTime - now;
+      
+      if (diff <= 0) {
+        // TIME ACHU - UNLOCK
+        timerEl.innerHTML = '✅ READY!';
+        timerEl.classList.add('ready');
+        btn.disabled = false;
+        btn.innerText = `Open ${CONFIG.PDF_TITLE}`;
+        msgEl.innerText = 'Ipo open pannalam da!';
+        iconEl.innerText = '🔓';
+        return;
+      } else {
+        // TIME AAGALA - LOCK
+        const h = Math.floor(diff / 1000 / 60 / 60);
+        const m = Math.floor(diff / 1000 / 60) % 60;
+        const s = Math.floor(diff / 1000) % 60;
+        
+        timerEl.innerHTML = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        btn.disabled = true;
+        btn.innerText = `Unlocks at ${CONFIG.HOUR}:${String(CONFIG.MINUTE).padStart(2,'0')}`;
+        
+        if (h > 0) {
+          msgEl.innerText = `Innum ${h}h ${m}m iruku. Wait pannu da`;
+        } else {
+          msgEl.innerText = `Innum ${m}m ${s}s dhan. Ready aagu!`;
+        }
+      }
+    }
+
+    btn.onclick = () => {
+      if (!btn.disabled) {
+        window.open(CONFIG.PDF_FILE, '_blank');
+      }
+    }
+
+    setInterval(checkTime, 1000);
+    checkTime();
+    document.title = `${CONFIG.PDF_TITLE} - ${CONFIG.HOUR}:${String(CONFIG.MINUTE).padStart(2,'0')} Unlock`;
+  </script>
+</body>
+</html>
