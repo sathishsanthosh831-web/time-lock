@@ -1,138 +1,118 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Time Lock PDF</title>
+    <title>Time Lock</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: Arial; 
             background: #0d1117; 
-            color: #c9d1d9; 
+            color: #fff; 
             text-align: center; 
-            padding: 20px;
+            padding: 50px;
         }
-        .container { 
-            max-width: 800px; 
-            margin: auto; 
+        .box { 
             background: #161b22; 
-            padding: 30px; 
-            border-radius: 12px; 
-            border: 1px solid #30363d;
+            padding: 40px; 
+            border-radius: 10px; 
+            display: inline-block;
         }
-        .timer {
-            font-size: 48px;
-            font-weight: bold;
-            color: #f78166;
-            margin: 20px 0;
+        #timer { 
+            font-size: 60px; 
+            color: #f85149; 
+            margin: 20px 0; 
         }
         .hidden { display: none; }
         button {
             background: #238636;
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 15px 30px;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 18px;
             cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Time Locked Document</h1>
+    <div class="box">
+        <h1>🔒 Time Locked PDF</h1>
         
-        <!-- Ipo Enna Status nu Kaatum -->
-        <div id="statusBox">
-            <h2 id="statusText">Checking...</h2>
-            <div class="timer" id="countdown"></div>
-            <p id="openTimeText"></p>
+        <div id="lockedScreen">
+            <h2 id="status">LOCKED</h2>
+            <div id="timer">--:--:--</div>
+            <p id="timeInfo"></p>
         </div>
 
-        <!-- Time Vanthaprom Idhu Open Aagum -->
-        <div id="pdfBox" class="hidden">
-            <h3>✅ Document Unlocked!</h3>
-            <a id="pdfLink" href="#" target="_blank">
-                <button>View / Download PDF</button>
+        <div id="unlockedScreen" class="hidden">
+            <h2 style="color:#2ea043">✅ UNLOCKED</h2>
+            <a id="pdfBtn" href="#" target="_blank">
+                <button>Open PDF</button>
             </a>
-            <br><br>
-            <iframe id="pdfFrame" src="" width="100%" height="600px"></iframe>
         </div>
     </div>
 
     <script>
-        // ==============================================
-        // ITHA MATTUM MAATHU DA - VERA EDHUM THODA VENAM
-        // ==============================================
-        const PDF_NAME = "today.pdf";  // Indha peru ah maathu. Ex: "new.pdf", "certificate2.pdf"
+        // ========================================
+        // IDHA MATTUM MAATHU DA - 12 HOUR FORMAT
+        // ========================================
+        const PDF_FILE = "today.pdf";    // PDF name
         
-        const OPEN_TIME = {            // PDF open aaga vendiya time
-            hour: 17,                  // 1 PM ku 13. 1 AM ku 1. 24hr format da
-            minute: 16,                // 30 minutes
-            duration: 2                // Evlo minute open la irukanum? 5 min nu vechiruken
-        };
-        // ==============================================
+        const OPEN_HOUR = 5;             // 1 to 12 mattum podu
+        const OPEN_MIN = 26;             // 0 to 59
+        const AM_OR_PM = "PM";           // "AM" or "PM" nu podu
+        const OPEN_MINS = 5;             // Evlo nimisham open irukanum
+        // ========================================
 
-        const statusText = document.getElementById('statusText');
-        const countdown = document.getElementById('countdown');
-        const openTimeText = document.getElementById('openTimeText');
-        const pdfBox = document.getElementById('pdfBox');
-        const pdfLink = document.getElementById('pdfLink');
-        const pdfFrame = document.getElementById('pdfFrame');
+        // 12hr ah 24hr ku convert panrom - nee thoda venam
+        let hour24 = OPEN_HOUR;
+        if (AM_OR_PM === "PM" && OPEN_HOUR !== 12) {
+            hour24 = OPEN_HOUR + 12;
+        }
+        if (AM_OR_PM === "AM" && OPEN_HOUR === 12) {
+            hour24 = 0; // 12 AM = 0 hours
+        }
 
-        // PDF link set panrom
-        pdfLink.href = PDF_NAME;
-        pdfFrame.src = PDF_NAME;
+        document.getElementById('pdfBtn').href = PDF_FILE;
 
-        function checkTime() {
+        function updateClock() {
             const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
+            const startTime = new Date();
+            startTime.setHours(hour24, OPEN_MIN, 0);
+            
+            const endTime = new Date(startTime);
+            endTime.setMinutes(startTime.getMinutes() + OPEN_MINS);
 
-            // Open aagura time calculate panrom
-            const openTime = new Date();
-            openTime.setHours(OPEN_TIME.hour, OPEN_TIME.minute, 0, 0);
+            // Display ku 12hr format la kaaturom
+            const timeStr = `${OPEN_HOUR}:${OPEN_MIN.toString().padStart(2,'0')} ${AM_OR_PM}`;
+            const endHour12 = endTime.getHours() % 12 || 12;
+            const endAMPM = endTime.getHours() >= 12 ? 'PM' : 'AM';
+            const endTimeStr = `${endHour12}:${endTime.getMinutes().toString().padStart(2,'0')} ${endAMPM}`;
+            document.getElementById('timeInfo').innerText = `Open Time: ${timeStr} to ${endTimeStr}`;
 
-            // Close aagura time calculate panrom
-            const closeTime = new Date(openTime);
-            closeTime.setMinutes(openTime.getMinutes() + OPEN_TIME.duration);
-
-            // Display ku time kaatura text
-            const openTimeString = `${OPEN_TIME.hour.toString().padStart(2, '0')}:${OPEN_TIME.minute.toString().padStart(2, '0')}`;
-            const closeTimeString = `${closeTime.getHours().toString().padStart(2, '0')}:${closeTime.getMinutes().toString().padStart(2, '0')}`;
-            openTimeText.innerText = `Open Time: ${openTimeString} to ${closeTimeString}`;
-
-            // Time check panrom
-            if (now >= openTime && now <= closeTime) {
-                // TIME VANTHUDUCHU - PDF KAATU
-                statusText.innerText = "Document is OPEN now!";
-                statusText.style.color = "#2ea043";
-                countdown.innerText = "UNLOCKED";
-                pdfBox.classList.remove('hidden');
-            } else if (now < openTime) {
-                // INNUM TIME VARALA - COUNTDOWN KAATU
-                pdfBox.classList.add('hidden');
-                statusText.innerText = "Document is LOCKED";
-                statusText.style.color = "#f85149";
-
-                // Countdown calculate panrom
-                const diff = openTime - now;
-                const hours = Math.floor(diff / 1000 / 60 / 60);
-                const minutes = Math.floor(diff / 1000 / 60) % 60;
-                const seconds = Math.floor(diff / 1000) % 60;
-                countdown.innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            if (now >= startTime && now <= endTime) {
+                document.getElementById('lockedScreen').classList.add('hidden');
+                document.getElementById('unlockedScreen').classList.remove('hidden');
             } else {
-                // TIME MUDINJIDUCHU
-                pdfBox.classList.add('hidden');
-                statusText.innerText = "Time Expired. Tomorrow try pannu da.";
-                statusText.style.color = "#8b949e";
-                countdown.innerText = "CLOSED";
+                document.getElementById('lockedScreen').classList.remove('hidden');
+                document.getElementById('unlockedScreen').classList.add('hidden');
+                
+                if (now < startTime) {
+                    const diff = startTime - now;
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('timer').innerText = 
+                        `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                } else {
+                    document.getElementById('status').innerText = "EXPIRED";
+                    document.getElementById('timer').innerText = "CLOSED";
+                }
             }
         }
 
-        // 1 second ku oru thadava time check pannu
-        setInterval(checkTime, 1000);
-        checkTime(); // First time udane run pannu
+        setInterval(updateClock, 1000);
+        updateClock();
     </script>
 </body>
 </html>
